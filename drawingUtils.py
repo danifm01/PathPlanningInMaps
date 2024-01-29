@@ -1,7 +1,7 @@
 import osmnx
 import matplotlib.pyplot as plt
 
-def drawMap(region):
+def drawMap(region, show=True):
     roads = osmnx.graph_from_polygon(region['geometry'][0])
     rivers = osmnx.features_from_polygon(region['geometry'][0], tags = {'waterway': 'river'})
 
@@ -22,7 +22,8 @@ def drawMap(region):
     ax.grid('on', which='major', axis='y', color = '#99A2A2')
     ax.get_xaxis().set_visible(True)
     ax.get_yaxis().set_visible(True)
-    plt.show()
+    if show:
+        plt.show()
 
 def drawNode(nodes, nodeNum):
     x = nodes[nodeNum]['x']
