@@ -11,11 +11,22 @@ class Dijkstra():
         self.distances = defaultdict(lambda: np.Infinity)
         self.toExplore = defaultdict(lambda: np.Infinity)
         self.revAdjacency = defaultdict(set)
+        self.visitedOrder = []
 
     def run(self, source: int, destiny: int):
         self.__initSearch(source)
         while self.toExplore:
             selectedNode = self.__selectNode()
+            if selectedNode == destiny:
+                return True
+            self.__evaluateNode(selectedNode)
+        return False
+
+    def runStepByStep(self, source: int, destiny: int):
+        self.__initSearch(source)
+        while self.toExplore:
+            selectedNode = self.__selectNode()
+            yield selectedNode
             if selectedNode == destiny:
                 return True
             self.__evaluateNode(selectedNode)
@@ -29,6 +40,7 @@ class Dijkstra():
     def __selectNode(self):
         selectedNode = min(self.toExplore, key=self.toExplore.get)
         del(self.toExplore[selectedNode])
+        self.visitedOrder.append(selectedNode)
         return selectedNode
 
     def __evaluateNode(self, currentNode: int):
@@ -59,12 +71,21 @@ if __name__  == '__main__':
     region = osmnx.geocoder.geocode_to_gdf(region_name, which_result=1)
     roads = osmnx.graph_from_polygon(region['geometry'][0])
     adjacency = dict(roads.adjacency())
-    source = 368238480
-    destiny = 368238483
+    # source = 368238480
+    # destiny = 368238483
+    # source = np.random.choice(list(adjacency.keys()), 1)[0]
+    source = 1865576017
+    # destiny = 368238483
+    destiny = 5857206372
+    # for i in range(10):
+    #     destiny = np.random.choice(list(adjacency.keys()), 1)[0]
+    print(source)
+    print(destiny)
     dijkstra = Dijkstra(adjacency)
     path = dijkstra.getShortestPath(source, destiny)
     draw.drawMap(region, show=False)
     for node in path:
         draw.drawNode(roads.nodes(data=True), node)
     plt.show()
+    print(dijkstra.visitedOrder)
 
