@@ -8,9 +8,12 @@ import os
 path = os.path.abspath('')
 sys.path.append(path)
 from Dijkstra import Dijkstra
+from Astar import Astar
 
+DIJKSTRA = 0
+ASTAR = 1
 
-def getVisitedCoords(region_name, source=None, destiny=None):
+def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
     if region_name.endswith('.osm'):
         # roads = osmnx.graph_from_xml(region_name)
         roads = osmnx.io.load_graphml(region_name)
@@ -25,9 +28,15 @@ def getVisitedCoords(region_name, source=None, destiny=None):
     if destiny is None:
         destiny = np.random.choice(list(adjacency.keys()), 1)[0]
 
-    dijkstra = Dijkstra(adjacency)
-    path = dijkstra.getShortestPath(source, destiny)
-    visited = dijkstra.visitedOrder
+    if algorithmType == DIJKSTRA:
+        findingAlgorithm = Dijkstra(adjacency)
+    elif algorithmType == ASTAR:
+        nodes = dict(roads.nodes(data=True))
+        findingAlgorithm = Astar(adjacency, nodes)
+    else:
+        raise NotImplementedError
+    path = findingAlgorithm.getShortestPath(source, destiny)
+    visited = findingAlgorithm.visitedOrder
     notVisited = []
     setVisited = set(visited)
     for node in roads.nodes:
@@ -42,18 +51,24 @@ def getVisitedCoords(region_name, source=None, destiny=None):
     for v in path:
         aux = roads.nodes[v]
         resultPath.append((aux['x'], aux['y']))
-    return notVisited, result, resultPath
+    return notVisited, result, resultPath, source, destiny
 
 if __name__ == '__main__':
-    # region_name = 'Cebolla' 
-    # source = 1865576017
-    # destiny = 5857206372
-    # notVisited, result, _ = getVisitedCoords(region_name, source, destiny)
-
+    source = 5179960378
+    destiny = 5046068653
     region_name = 'Data/Madrid_ml.osm'
-    notVisited, result, path = getVisitedCoords(region_name)
-    outputName = f"{region_name.replace('.osm', '')}.json" 
-    outputNamePath = f"{region_name.replace('.osm', '')}_path.json" 
+    
+    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=DIJKSTRA)
+    outputName = f"{region_name.replace('.osm', '')}_Dijkstra_{source}-{destiny}.json" 
+    outputNamePath = f"{region_name.replace('.osm', '')}_Dijkstra_{source}-{destiny}_path.json" 
+    with open(outputName, 'w') as f:
+        json.dump([result, notVisited], f)
+    with open(outputNamePath, 'w') as f:
+        json.dump(path, f)
+
+    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=ASTAR)
+    outputName = outputName.replace('Dijkstra', 'Astar')
+    outputNamePath = outputNamePath.replace('Dijkstra', 'Astar')
     with open(outputName, 'w') as f:
         json.dump([result, notVisited], f)
     with open(outputNamePath, 'w') as f:
