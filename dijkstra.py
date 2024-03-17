@@ -1,5 +1,6 @@
 import numpy as np
 from collections import defaultdict
+from tqdm import tqdm
 
 
 class Dijkstra():
@@ -15,11 +16,14 @@ class Dijkstra():
 
     def run(self, source: int, destiny: int):
         self.__initSearch(source)
+        pbar = tqdm()
         while self.toExplore:
+            pbar.update()
             selectedNode = self.__selectNode()
             if selectedNode == destiny:
                 return True
             self.__evaluateNode(selectedNode)
+        pbar.close()
         return False
 
     def runStepByStep(self, source: int, destiny: int):
