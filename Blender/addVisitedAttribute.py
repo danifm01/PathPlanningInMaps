@@ -2,13 +2,15 @@ import math
 import bpy
 import json
 import mathutils
-import numpy as np
 import sys
+import os
 sys.path.append('C:\\Users\\danfe\\AppData\\Roaming\\Python\\Python310\\Scripts'+ '\\..\\site-packages')
 from tqdm import tqdm
 
 FILEPATH = 'test3.json'
 FILEPATH = 'Data/Madrid_ml.json'
+FILEPATH = 'Data\Madrid_ml_model_8439680822-308723728.json'
+FILEPATH = 'Data\Madrid_ml_model_5179960378-5046068653.json'
 
 class TransverseMercator:
     radius = 6378137.
@@ -42,36 +44,60 @@ class TransverseMercator:
         lat = math.degrees(lat)
         return (lat, lon)
 
-lat = bpy.context.scene['lat']
-lon = bpy.context.scene['lon']
-converter = TransverseMercator(lat=lat, lon=lon)
-with open(FILEPATH, 'r') as f:
-    data = json.load(f)
-with open(FILEPATH.replace('.json', '_path.json'), 'r') as f:
-    shortestPath = json.load(f)
-visited = data[0]
-notVisited = data[1]
-nodes = visited + notVisited
-maxVisitedIndex = len(visited)
+def addVisitedAttribute(data, shortestPath):
+    lat = bpy.context.scene['lat']
+    lon = bpy.context.scene['lon']
+    converter = TransverseMercator(lat=lat, lon=lon)
+    visited = data[0]
+    notVisited = data[1]
+    nodes = visited + notVisited
+    maxVisitedIndex = len(visited)
 
-tree = mathutils.kdtree.KDTree(len(nodes))
-for i, v in enumerate(tqdm(nodes)):
-    coord = converter.fromGeographic(v[1], v[0])
-    tree.insert(coord, i)
-tree.balance()
+    tree = mathutils.kdtree.KDTree(len(nodes))
+    for i, v in enumerate(tqdm(nodes)):
+        coord = converter.fromGeographic(v[1], v[0])
+        tree.insert(coord, i)
+    tree.balance()
 
-roads = bpy.context.active_object
-roads.data.attributes.new('visited', 'INT', 'POINT')
-roads.data.attributes.new('isShortestPath', 'INT', 'POINT')
-testResult = []
-for i, vertex in enumerate(tqdm(roads.data.vertices)):
-    co, index, dist = tree.find(vertex.co)
-    if index >= maxVisitedIndex:
-        index = -1
-    roads.data.vertices.data.attributes['visited'].data[i].value = index
-    if nodes[index] in shortestPath:
-        roads.data.vertices.data.attributes['isShortestPath'].data[i].value = 1
-    else:
-        roads.data.vertices.data.attributes['isShortestPath'].data[i].value = 0
+    roads = bpy.context.active_object
+    roads.data.attributes.remove(roads.data.attributes['visited'])
+    roads.data.attributes.remove(roads.data.attributes['isShortestPath'])
+    roads.data.attributes.new('visited', 'INT', 'POINT')
+    roads.data.attributes.new('isShortestPath', 'INT', 'POINT')
+    testResult = []
+    for i, vertex in enumerate(tqdm(roads.data.vertices)):
+        co, index, dist = tree.find(vertex.co)
+        if index >= maxVisitedIndex:
+            index = -1
+        roads.data.vertices.data.attributes['visited'].data[i].value = index
+        if nodes[index] in shortestPath:
+            roads.data.vertices.data.attributes['isShortestPath'].data[i].value = 1
+        else:
+            roads.data.vertices.data.attributes['isShortestPath'].data[i].value = 0
+
+def getDataFromFile(FILEPATH, algorithmName):
+    filename = FILEPATH.replace('model', algorithmName)
+    with open(filename, 'r') as f:
+        dataInternal = json.load(f)
+    with open(filename.replace('.json', '_path.json'), 'r') as f:
+        shortestPathInternal = json.load(f)
+    return dataInternal,shortestPathInternal
+
+bpy.context.window.scene = bpy.data.scenes['Base']
+algorithmName = 'Dijkstra'
+data, shortestPath = getDataFromFile(FILEPATH, algorithmName)
+bpy.ops.object.select_pattern(pattern="map*")
+addVisitedAttribute(data, shortestPath)
+bpy.ops.scene.new(type='FULL_COPY')
+bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
+print('----END DIJKSTRA----')
+
+bpy.context.window.scene = bpy.data.scenes['Base']
+algorithmName = 'Astar'
+data, shortestPath = getDataFromFile(FILEPATH, algorithmName)
+addVisitedAttribute(data, shortestPath)
+bpy.ops.scene.new(type='FULL_COPY')
+bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
+print('----END A*----')
 
 print('************************END*********************************')

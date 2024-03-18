@@ -3,11 +3,16 @@ from collections import defaultdict
 import geopy.distance
 from tqdm import tqdm
 
+ASTAR_EUCLIDEAN = 1
+ASTAR_MANHATAN = 2
+ASTAR_CHEBISHEB = 3
+ASTAR_GREEDY = 4
 
 class Astar():
-    def __init__(self, adjacency: dict, nodes: dict) -> None:
+    def __init__(self, adjacency: dict, nodes: dict, heuristicType: int=ASTAR_EUCLIDEAN) -> None:
         self.adjacency = adjacency
         self.nodes = nodes
+        self.heuristic = heuristicType
         self.reset()
 
     def reset(self):
@@ -59,7 +64,10 @@ class Astar():
         for node, data in self.adjacency[currentNode].items():
             self.revAdjacency[node].add(currentNode)
             currentG = self.g[currentNode] + data[0]['length'] 
-            currentF = currentG + self.__getDistanceToDestiny(node)
+            if self.heuristic == ASTAR_GREEDY:
+                currentF = self.__getDistanceToDestiny(node)
+            else:
+                currentF = currentG + self.__getH(node)
             if currentF < self.f[node]:
                 self.g[node] = currentG
                 self.f[node] = currentF 
@@ -67,13 +75,34 @@ class Astar():
         return False
 
     def __getH(self, node):
-        return self.__getDistanceToDestiny(node)
+        return {ASTAR_EUCLIDEAN: self.__getDistanceToDestiny(node),
+                ASTAR_MANHATAN: self.__getManhattanDistance(node),
+                ASTAR_CHEBISHEB: self.__getChebishebDistance(node),
+                ASTAR_GREEDY: self.__getDistanceToDestiny(node)}[self.heuristic]
 
     def __getDistanceToDestiny(self, node):
         coord1 = (self.nodes[node]['y'], self.nodes[node]['x'])
         coord2 = (self.nodes[self.destiny]['y'], self.nodes[self.destiny]['x'])
         distance = geopy.distance.geodesic(coord1, coord2).m 
-        return distance / 1 
+        return distance
+
+    def __getManhattanDistance(self, node):
+        coord1 = (self.nodes[node]['y'], self.nodes[node]['x'])
+        coord2 = (self.nodes[self.destiny]['y'], self.nodes[node]['x'])
+        distance1 = geopy.distance.geodesic(coord1, coord2).m 
+        coord1 = (self.nodes[node]['y'], self.nodes[node]['x'])
+        coord2 = (self.nodes[node]['y'], self.nodes[self.destiny]['x'])
+        distance2 = geopy.distance.geodesic(coord1, coord2).m 
+        return distance1 + distance2 
+
+    def __getChebishebDistance(self, node):
+        coord1 = (self.nodes[node]['y'], self.nodes[node]['x'])
+        coord2 = (self.nodes[self.destiny]['y'], self.nodes[node]['x'])
+        distance1 = geopy.distance.geodesic(coord1, coord2).m 
+        coord1 = (self.nodes[node]['y'], self.nodes[node]['x'])
+        coord2 = (self.nodes[node]['y'], self.nodes[self.destiny]['x'])
+        distance2 = geopy.distance.geodesic(coord1, coord2).m 
+        return min(distance1, distance2)
 
     def getShortestPath(self, source: int, destiny: int):
         foundPath = self.run(source, destiny)
@@ -103,7 +132,7 @@ if __name__  == '__main__':
     #     destiny = np.random.choice(list(adjacency.keys()), 1)[0]
     print(source)
     print(destiny)
-    astar = Astar(adjacency, nodes)
+    astar = Astar(adjacency, nodes, 4)
     path = astar.getShortestPath(source, destiny)
     draw.drawMap(region, show=False)
     for node in path:

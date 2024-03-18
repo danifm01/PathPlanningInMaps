@@ -11,7 +11,10 @@ from Dijkstra import Dijkstra
 from Astar import Astar
 
 DIJKSTRA = 0
-ASTAR = 1
+ASTAR_EUCLIDEAN = 1
+ASTAR_MANHATAN = 2
+ASTAR_CHEBISHEB = 3
+ASTAR_GREEDY = 4
 
 def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
     if region_name.endswith('.osm'):
@@ -30,9 +33,18 @@ def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
 
     if algorithmType == DIJKSTRA:
         findingAlgorithm = Dijkstra(adjacency)
-    elif algorithmType == ASTAR:
+    elif algorithmType == ASTAR_EUCLIDEAN:
         nodes = dict(roads.nodes(data=True))
-        findingAlgorithm = Astar(adjacency, nodes)
+        findingAlgorithm = Astar(adjacency, nodes, ASTAR_EUCLIDEAN)
+    elif algorithmType == ASTAR_MANHATAN:
+        nodes = dict(roads.nodes(data=True))
+        findingAlgorithm = Astar(adjacency, nodes, ASTAR_MANHATAN)
+    elif algorithmType == ASTAR_CHEBISHEB:
+        nodes = dict(roads.nodes(data=True))
+        findingAlgorithm = Astar(adjacency, nodes, ASTAR_CHEBISHEB)
+    elif algorithmType == ASTAR_GREEDY:
+        nodes = dict(roads.nodes(data=True))
+        findingAlgorithm = Astar(adjacency, nodes, ASTAR_GREEDY)
     else:
         raise NotImplementedError
     path = findingAlgorithm.getShortestPath(source, destiny)
@@ -66,7 +78,7 @@ if __name__ == '__main__':
     with open(outputNamePath, 'w') as f:
         json.dump(path, f)
 
-    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=ASTAR)
+    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=ASTAR_EUCLIDEAN)
     outputName = outputName.replace('Dijkstra', 'Astar')
     outputNamePath = outputNamePath.replace('Dijkstra', 'Astar')
     with open(outputName, 'w') as f:
