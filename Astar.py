@@ -4,7 +4,7 @@ import geopy.distance
 from tqdm import tqdm
 
 ASTAR_EUCLIDEAN = 1
-ASTAR_MANHATAN = 2
+ASTAR_MANHATTAN = 2
 ASTAR_CHEBISHEB = 3
 ASTAR_GREEDY = 4
 
@@ -76,7 +76,7 @@ class Astar():
 
     def __getH(self, node):
         return {ASTAR_EUCLIDEAN: self.__getDistanceToDestiny(node),
-                ASTAR_MANHATAN: self.__getManhattanDistance(node),
+                ASTAR_MANHATTAN: self.__getManhattanDistance(node),
                 ASTAR_CHEBISHEB: self.__getChebishebDistance(node),
                 ASTAR_GREEDY: self.__getDistanceToDestiny(node)}[self.heuristic]
 
@@ -130,6 +130,8 @@ if __name__  == '__main__':
     destiny = 5857206372
     # for i in range(10):
     #     destiny = np.random.choice(list(adjacency.keys()), 1)[0]
+    source = 1629096132
+    destiny = 4679051993
     print(source)
     print(destiny)
     astar = Astar(adjacency, nodes, 4)

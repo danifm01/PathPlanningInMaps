@@ -83,21 +83,19 @@ def getDataFromFile(FILEPATH, algorithmName):
         shortestPathInternal = json.load(f)
     return dataInternal,shortestPathInternal
 
-bpy.context.window.scene = bpy.data.scenes['Base']
-algorithmName = 'Dijkstra'
-data, shortestPath = getDataFromFile(FILEPATH, algorithmName)
-bpy.ops.object.select_pattern(pattern="map*")
-addVisitedAttribute(data, shortestPath)
-bpy.ops.scene.new(type='FULL_COPY')
-bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
-print('----END DIJKSTRA----')
+def addAttribute(FILEPATH, algorithmName ):
+    bpy.context.window.scene = bpy.data.scenes['Base']
+    data, shortestPath = getDataFromFile(FILEPATH, algorithmName)
+    bpy.ops.object.select_pattern(pattern="map*")
+    addVisitedAttribute(data, shortestPath)
+    bpy.ops.scene.new(type='FULL_COPY')
+    bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
+    print(f'----END {algorithmName}----')
 
-bpy.context.window.scene = bpy.data.scenes['Base']
-algorithmName = 'Astar'
-data, shortestPath = getDataFromFile(FILEPATH, algorithmName)
-addVisitedAttribute(data, shortestPath)
-bpy.ops.scene.new(type='FULL_COPY')
-bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
-print('----END A*----')
+addAttribute(FILEPATH, 'Dijkstra')
+addAttribute(FILEPATH, 'AStar_Euclidean')
+addAttribute(FILEPATH, 'AStar_Manhattan')
+addAttribute(FILEPATH, 'AStar_Chebisheb')
+addAttribute(FILEPATH, 'AStar_Greedy')
 
 print('************************END*********************************')

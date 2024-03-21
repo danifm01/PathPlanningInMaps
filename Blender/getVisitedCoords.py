@@ -12,7 +12,7 @@ from Astar import Astar
 
 DIJKSTRA = 0
 ASTAR_EUCLIDEAN = 1
-ASTAR_MANHATAN = 2
+ASTAR_MANHATTAN = 2
 ASTAR_CHEBISHEB = 3
 ASTAR_GREEDY = 4
 
@@ -21,7 +21,6 @@ def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
         # roads = osmnx.graph_from_xml(region_name)
         roads = osmnx.io.load_graphml(region_name)
     else:
-        
         region = osmnx.geocoder.geocode_to_gdf(region_name, which_result=1)
         roads = osmnx.graph_from_polygon(region['geometry'][0])
     adjacency = dict(roads.adjacency())
@@ -36,9 +35,9 @@ def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
     elif algorithmType == ASTAR_EUCLIDEAN:
         nodes = dict(roads.nodes(data=True))
         findingAlgorithm = Astar(adjacency, nodes, ASTAR_EUCLIDEAN)
-    elif algorithmType == ASTAR_MANHATAN:
+    elif algorithmType == ASTAR_MANHATTAN:
         nodes = dict(roads.nodes(data=True))
-        findingAlgorithm = Astar(adjacency, nodes, ASTAR_MANHATAN)
+        findingAlgorithm = Astar(adjacency, nodes, ASTAR_MANHATTAN)
     elif algorithmType == ASTAR_CHEBISHEB:
         nodes = dict(roads.nodes(data=True))
         findingAlgorithm = Astar(adjacency, nodes, ASTAR_CHEBISHEB)
@@ -65,24 +64,22 @@ def getVisitedCoords(region_name, source=None, destiny=None, algorithmType=0):
         resultPath.append((aux['x'], aux['y']))
     return notVisited, result, resultPath, source, destiny
 
+def saveSearchedPath(region_name, source, destiny, algorithmCode, name):
+    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=algorithmCode)
+    outputName = f"{region_name.replace('.osm', '')}_{name}_{source}-{destiny}.json" 
+    outputNamePath = f"{region_name.replace('.osm', '')}_{name}_{source}-{destiny}_path.json" 
+    with open(outputName, 'w') as f:
+        json.dump([result, notVisited], f)
+    with open(outputNamePath, 'w') as f:
+        json.dump(path, f)
+
 if __name__ == '__main__':
     source = 5179960378
     destiny = 5046068653
     region_name = 'Data/Madrid_ml.osm'
     
-    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=DIJKSTRA)
-    outputName = f"{region_name.replace('.osm', '')}_Dijkstra_{source}-{destiny}.json" 
-    outputNamePath = f"{region_name.replace('.osm', '')}_Dijkstra_{source}-{destiny}_path.json" 
-    with open(outputName, 'w') as f:
-        json.dump([result, notVisited], f)
-    with open(outputNamePath, 'w') as f:
-        json.dump(path, f)
-
-    notVisited, result, path, source, destiny = getVisitedCoords(region_name, source, destiny, algorithmType=ASTAR_EUCLIDEAN)
-    outputName = outputName.replace('Dijkstra', 'Astar')
-    outputNamePath = outputNamePath.replace('Dijkstra', 'Astar')
-    with open(outputName, 'w') as f:
-        json.dump([result, notVisited], f)
-    with open(outputNamePath, 'w') as f:
-        json.dump(path, f)
-
+    saveSearchedPath(region_name, source, destiny, DIJKSTRA, 'Dijkstra')
+    saveSearchedPath(region_name, source, destiny, ASTAR_EUCLIDEAN, 'AStar_Euclidean')
+    saveSearchedPath(region_name, source, destiny, ASTAR_MANHATTAN, 'AStar_Manhattan')
+    saveSearchedPath(region_name, source, destiny, ASTAR_CHEBISHEB, 'AStar_Chebisheb')
+    saveSearchedPath(region_name, source, destiny, ASTAR_GREEDY, 'AStar_Greedy')
