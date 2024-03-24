@@ -10,7 +10,9 @@ from tqdm import tqdm
 FILEPATH = 'test3.json'
 FILEPATH = 'Data/Madrid_ml.json'
 FILEPATH = 'Data\Madrid_ml_model_8439680822-308723728.json'
-FILEPATH = 'Data\Madrid_ml_model_5179960378-5046068653.json'
+source = 3517277812
+destiny = 5008123953
+FILEPATH = f'Data\Madrid_ml_model_{source}-{destiny}.json'
 
 class TransverseMercator:
     radius = 6378137.
@@ -89,7 +91,10 @@ def addAttribute(FILEPATH, algorithmName ):
     bpy.ops.object.select_pattern(pattern="map*")
     addVisitedAttribute(data, shortestPath)
     bpy.ops.scene.new(type='FULL_COPY')
-    bpy.context.scene.name = f"{os.path.basename(FILEPATH)[:4]}_{algorithmName}"
+    baseName = os.path.basename(FILEPATH)
+    sceneName = f"{algorithmName}_{baseName[:baseName.find('_')]}-{source}-{destiny}"
+    bpy.context.scene.name = sceneName 
+    bpy.context.scene.render.filepath = f"//Renders\\{sceneName}\\"
     print(f'----END {algorithmName}----')
 
 addAttribute(FILEPATH, 'Dijkstra')
